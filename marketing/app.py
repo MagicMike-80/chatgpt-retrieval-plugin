@@ -1,6 +1,5 @@
 import os
 import json
-import sys
 from datetime import datetime
 from typing import Optional
 from urllib.parse import urlencode
@@ -8,11 +7,7 @@ from urllib.parse import urlencode
 import uvicorn
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
-
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from services.openai import get_chat_completion
 
 app = FastAPI(title="thai2drive Marketing Tools")
 
@@ -47,6 +42,16 @@ def save_campaigns(campaigns: list) -> None:
         json.dump(campaigns, f, indent=2, ensure_ascii=False)
 
 
+def ai_generate(messages: list) -> str:
+    api_key = os.environ.get("OPENAI_API_KEY")
+    if not api_key:
+        return "(OPENAI_API_KEY er ikkje satt — set miljøvariabelen og prøv igjen)"
+    from openai import OpenAI
+    client = OpenAI(api_key=api_key)
+    resp = client.chat.completions.create(model="gpt-4o", messages=messages)
+    return resp.choices[0].message.content.strip()
+
+
 @app.get("/", response_class=HTMLResponse)
 async def index():
     with open(os.path.join(STATIC_DIR, "index.html"), encoding="utf-8") as f:
@@ -56,37 +61,22 @@ async def index():
 @app.post("/api/utm/generate")
 async def generate_utm(req: UTMRequest):
     medium_map = {
-        "facebook": "social",
-        "instagram": "social",
-        "tiktok": "social",
-        "youtube": "video",
-        "email": "email",
-        "sms": "sms",
+        "facebook": "social", "instagram": "social", "tiktok": "social",
+        "youtube": "video", "email": "email", "sms": "sms",
     }
     medium = req.medium or medium_map.get(req.platform.lower(), "social")
-
-    params = {
-        "utm_source": req.platform.lower(),
-        "utm_medium": medium,
-        "utm_campaign": req.campaign_name,
-    }
+    params = {"utm_source": req.platform.lower(), "utm_medium": medium, "utm_campaign": req.campaign_name}
     if req.content_description:
         params["utm_content"] = req.content_description
 
     url = f"{BASE_URL}?{urlencode(params)}"
-
     campaigns = load_campaigns()
     campaign_id = f"{req.platform}_{req.campaign_name}_{datetime.now().strftime('%Y%m%d%H%M%S')}"
     campaigns.append({
-        "id": campaign_id,
-        "name": req.campaign_name,
-        "platform": req.platform,
-        "url": url,
-        "created_at": datetime.now().isoformat(),
-        "clicks": 0,
+        "id": campaign_id, "name": req.campaign_name, "platform": req.platform,
+        "url": url, "created_at": datetime.now().isoformat(), "clicks": 0,
     })
     save_campaigns(campaigns)
-
     return {"url": url, "campaign_id": campaign_id}
 
 
@@ -97,13 +87,11 @@ async def generate_content(req: ContentRequest):
         "norwegian": "Write ONLY in Norwegian (Bokmål).",
         "both": "Write in BOTH Thai and Norwegian. Thai first, then a separator line ---, then Norwegian.",
     }
-
     platform_notes = {
         "facebook": "Facebook post, 150–200 words, use 3–5 emojis",
         "instagram": "Instagram caption, 80–120 words, 5–8 emojis, 8–10 relevant hashtags at the end",
         "tiktok": "TikTok caption, 50–80 words, very casual and energetic tone, 3–5 hashtags",
     }
-
     messages = [
         {
             "role": "system",
@@ -117,13 +105,9 @@ async def generate_content(req: ContentRequest):
                 "Always end with a call-to-action to visit thai2drive.no or download the app."
             ),
         },
-        {
-            "role": "user",
-            "content": f"Create a {req.post_type} post about: {req.topic}",
-        },
+        {"role": "user", "content": f"Create a {req.post_type} post about: {req.topic}"},
     ]
-
-    content = get_chat_completion(messages, "gpt-4")
+    content = ai_generate(messages)
     return {"content": content}
 
 
