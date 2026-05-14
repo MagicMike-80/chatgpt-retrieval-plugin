@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>thai2drive — Marknadsføringsverktøy</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .tab-active { border-bottom: 3px solid #dc2626; color: #dc2626; }
+    .spinner { animation: spin 1s linear infinite; display: inline-block; }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .fade-in { animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen font-sans">
+
+  <!-- Header -->
+  <header class="bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg">
+    <div class="max-w-3xl mx-auto px-6 py-4 flex items-center gap-4">
+      <div class="text-4xl">🚗</div>
+      <div>
+        <h1 class="text-2xl font-extrabold tracking-tight">thai2drive.no</h1>
+        <p class="text-sm text-red-200">Marknadsføringsverktøy</p>
+      </div>
+    </div>
+  </header>
+
+  <!-- Tabs -->
+  <nav class="bg-white border-b shadow-sm sticky top-0 z-10">
+    <div class="max-w-3xl mx-auto px-6 flex gap-1">
+      <button onclick="showTab('utm')" id="tab-utm"
+        class="tab-btn px-5 py-4 text-sm font-semibold text-gray-500 hover:text-red-600 tab-active transition-colors">
+        🔗 UTM-lenkje
+      </button>
+      <button onclick="showTab('content')" id="tab-content"
+        class="tab-btn px-5 py-4 text-sm font-semibold text-gray-500 hover:text-red-600 transition-colors">
+        ✍️ Innhald
+      </button>
+      <button onclick="showTab('dashboard')" id="tab-dashboard"
+        class="tab-btn px-5 py-4 text-sm font-semibold text-gray-500 hover:text-red-600 transition-colors">
+        📊 Dashboard
+      </button>
+    </div>
+  </nav>
+
+  <main class="max-w-3xl mx-auto px-6 py-8">
+
+    <!-- ── UTM PANEL ── -->
+    <section id="panel-utm" class="fade-in">
+      <div class="bg-white rounded-2xl shadow-sm border p-6">
+        <h2 class="text-lg font-bold text-gray-800">UTM-lenkjegenerator</h2>
+        <p class="text-sm text-gray-400 mt-1 mb-6">
+          Lag sporings-URL-ar slik at du ser kvar brukarane kjem frå.
+        </p>
+
+        <div class="grid gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Platform</label>
+            <select id="utm-platform"
+              class="w-full border border-gray-200 rounded-xl px-3 py-2.5 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-red-400">
+              <option value="facebook">📘 Facebook</option>
+              <option value="instagram">📸 Instagram</option>
+              <option value="tiktok">🎵 TikTok</option>
+              <option value="youtube">▶️ YouTube</option>
+              <option value="email">📧 E-post / nyheitsbrev</option>
+              <option value="sms">💬 SMS</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Kampanjenamn</label>
+            <input type="text" id="utm-campaign" placeholder="t.d. thai-oslo-mai-2025"
+              class="w-full border border-gray-200 rounded-xl px-3 py-2.5 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-red-400">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              Innhaldsbeskrivelse <span class="text-gray-400 font-normal">(valfritt)</span>
+            </label>
+            <input type="text" id="utm-content" placeholder="t.d. teori-video-1"
+              class="w-full border border-gray-200 rounded-xl px-3 py-2.5 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-red-400">
+          </div>
+
+          <button onclick="generateUTM()"
+            class="bg-red-600 hover:bg-red-700 active:scale-95 text-white font-semibold rounded-xl px-6 py-3 transition-all">
+            Lag UTM-lenkje
+          </button>
+        </div>
+
+        <div id="utm-result" class="hidden mt-6 p-4 bg-gray-50 border border-gray-200 rounded-xl fade-in">
+          <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Din sporings-URL</p>
+          <div class="flex gap-2">
+            <input type="text" id="utm-url" readonly
+              class="flex-1 text-sm bg-white border border-gray-200 rounded-lg px-3 py-2 text-gray-700 truncate focus:outline-none">
+            <button onclick="copyUTM()" id="copy-utm-btn"
+              class="bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-medium px-4 py-2 rounded-lg transition">
+              Kopier
+            </button>
+          </div>
+          <p class="text-xs text-gray-400 mt-2">
+            Del denne lenkja i annonsen din. Klikk-statistikken vises i Dashboard.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── CONTENT PANEL ── -->
+    <section id="panel-content" class="hidden fade-in">
+      <div class="bg-white rounded-2xl shadow-sm border p-6">
+        <h2 class="text-lg font-bold text-gray-800">AI-innhaldsgenerator</h2>
+        <p class="text-sm text-gray-400 mt-1 mb-6">
+          Lag ferdig Facebook- og Instagram-postar på Thai og Norsk på sekundet.
+        </p>
+
+        <div class="grid gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Tema / emne</label>
+            <input type="text" id="content-topic"
+              placeholder="t.d. Vikeplikt i rundkøyring, Fareskilt, Promillegrense"
+              class="w-full border border-gray-200 rounded-xl px-3 py-2.5 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-red-400">
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Platform</label>
+              <select id="content-platform"
+                class="w-full border border-gray-200 rounded-xl px-3 py-2.5 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-red-400">
+                <option value="facebook">📘 Facebook</option>
+                <option value="instagram">📸 Instagram</option>
+                <option value="tiktok">🎵 TikTok</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Språk</label>
+              <select id="content-language"
+                class="w-full border border-gray-200 rounded-xl px-3 py-2.5 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-red-400">
+                <option value="both">🇹🇭🇳🇴 Thai + Norsk</option>
+                <option value="thai">🇹🇭 Berre Thai</option>
+                <option value="norwegian">🇳🇴 Berre Norsk</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Type innhald</label>
+            <div class="flex gap-2">
+              <button onclick="setPostType('tip', this)" data-type="tip"
+                class="post-type-btn flex-1 border rounded-xl py-2.5 text-sm font-semibold bg-red-600 text-white border-red-600 transition">
+                💡 Tips
+              </button>
+              <button onclick="setPostType('promotion', this)" data-type="promotion"
+                class="post-type-btn flex-1 border border-gray-200 rounded-xl py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition">
+                📣 Promo
+              </button>
+              <button onclick="setPostType('quiz', this)" data-type="quiz"
+                class="post-type-btn flex-1 border border-gray-200 rounded-xl py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition">
+                ❓ Quiz
+              </button>
+            </div>
+          </div>
+
+          <button onclick="generateContent()" id="generate-btn"
+            class="bg-red-600 hover:bg-red-700 active:scale-95 text-white font-semibold rounded-xl px-6 py-3 transition-all flex items-center justify-center gap-2">
+            <span id="gen-icon">✨</span>
+            <span id="gen-text">Generer innhald</span>
+          </button>
+        </div>
+
+        <div id="content-result" class="hidden mt-6 fade-in">
+          <div class="flex justify-between items-center mb-2">
+            <p class="text-xs font-semibold uppercase tracking-wide text-gray-400">Generert innhald</p>
+            <button onclick="copyContent()"
+              class="text-sm text-red-600 hover:text-red-700 font-semibold transition">
+              Kopier
+            </button>
+          </div>
+          <textarea id="content-text"
+            class="w-full border border-gray-200 rounded-xl p-4 text-sm text-gray-700 h-72 resize-y focus:outline-none focus:ring-2 focus:ring-red-400 bg-gray-50">
+          </textarea>
+          <p class="text-xs text-gray-400 mt-2">Du kan redigere teksten før du kopierer han.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── DASHBOARD PANEL ── -->
+    <section id="panel-dashboard" class="hidden fade-in">
+      <div class="bg-white rounded-2xl shadow-sm border p-6">
+        <div class="flex justify-between items-start mb-6">
+          <div>
+            <h2 class="text-lg font-bold text-gray-800">Kampanje-dashboard</h2>
+            <p class="text-sm text-gray-400 mt-1">Oversikt over alle UTM-kampanjane dine</p>
+          </div>
+          <button onclick="loadDashboard()"
+            class="text-sm text-red-600 hover:text-red-700 font-semibold transition">
+            ↻ Oppdater
+          </button>
+        </div>
+
+        <!-- Stats row -->
+        <div id="stats-row" class="hidden grid grid-cols-3 gap-4 mb-6">
+          <div class="bg-red-50 rounded-xl p-4 text-center">
+            <div id="stat-campaigns" class="text-2xl font-extrabold text-red-600">0</div>
+            <div class="text-xs text-gray-500 mt-1">Kampanjar</div>
+          </div>
+          <div class="bg-blue-50 rounded-xl p-4 text-center">
+            <div id="stat-clicks" class="text-2xl font-extrabold text-blue-600">0</div>
+            <div class="text-xs text-gray-500 mt-1">Totale klikk</div>
+          </div>
+          <div class="bg-green-50 rounded-xl p-4 text-center">
+            <div id="stat-platforms" class="text-2xl font-extrabold text-green-600">0</div>
+            <div class="text-xs text-gray-500 mt-1">Plattformar</div>
+          </div>
+        </div>
+
+        <div id="dashboard-empty" class="text-center py-16 text-gray-400">
+          <div class="text-5xl mb-4">📊</div>
+          <p class="font-medium">Ingen kampanjar enno</p>
+          <p class="text-sm mt-1">Lag din første UTM-lenkje for å kome i gang!</p>
+        </div>
+
+        <div id="dashboard-table" class="hidden overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b text-left">
+                <th class="pb-3 pr-4 text-xs font-semibold uppercase tracking-wide text-gray-400">Kampanje</th>
+                <th class="pb-3 pr-4 text-xs font-semibold uppercase tracking-wide text-gray-400">Platform</th>
+                <th class="pb-3 pr-4 text-xs font-semibold uppercase tracking-wide text-gray-400">Oppretta</th>
+                <th class="pb-3 text-xs font-semibold uppercase tracking-wide text-gray-400 text-right">Klikk</th>
+              </tr>
+            </thead>
+            <tbody id="dashboard-rows"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    let currentPostType = 'tip';
+
+    const PLATFORM_EMOJI = { facebook:'📘', instagram:'📸', tiktok:'🎵', youtube:'▶️', email:'📧', sms:'💬' };
+
+    function showTab(tab) {
+      ['utm','content','dashboard'].forEach(t => {
+        document.getElementById('panel-' + t).classList.add('hidden');
+        document.getElementById('tab-' + t).classList.remove('tab-active');
+      });
+      document.getElementById('panel-' + tab).classList.remove('hidden');
+      document.getElementById('tab-' + tab).classList.add('tab-active');
+      if (tab === 'dashboard') loadDashboard();
+    }
+
+    function setPostType(type, btn) {
+      currentPostType = type;
+      document.querySelectorAll('.post-type-btn').forEach(b => {
+        b.classList.remove('bg-red-600','text-white','border-red-600');
+        b.classList.add('text-gray-600','border-gray-200');
+      });
+      btn.classList.add('bg-red-600','text-white','border-red-600');
+      btn.classList.remove('text-gray-600','border-gray-200');
+    }
+
+    async function generateUTM() {
+      const platform = document.getElementById('utm-platform').value;
+      const campaign = document.getElementById('utm-campaign').value.trim();
+      const content  = document.getElementById('utm-content').value.trim();
+
+      if (!campaign) { showError('Skriv inn eit kampanjenamn'); return; }
+
+      const res  = await fetch('/api/utm/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ platform, campaign_name: campaign, content_description: content || null })
+      });
+      const data = await res.json();
+      document.getElementById('utm-url').value = data.url;
+      document.getElementById('utm-result').classList.remove('hidden');
+    }
+
+    async function generateContent() {
+      const topic = document.getElementById('content-topic').value.trim();
+      if (!topic) { showError('Skriv inn eit tema'); return; }
+
+      const btn = document.getElementById('generate-btn');
+      document.getElementById('gen-icon').innerHTML = '<span class="spinner">⏳</span>';
+      document.getElementById('gen-text').textContent = 'Genererer…';
+      btn.disabled = true;
+
+      try {
+        const res  = await fetch('/api/content/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            topic,
+            platform:  document.getElementById('content-platform').value,
+            language:  document.getElementById('content-language').value,
+            post_type: currentPostType
+          })
+        });
+        const data = await res.json();
+        document.getElementById('content-text').value = data.content;
+        document.getElementById('content-result').classList.remove('hidden');
+      } catch(e) {
+        showError('Noko gjekk gale. Sjekk at OPENAI_API_KEY er satt.');
+      } finally {
+        document.getElementById('gen-icon').textContent = '✨';
+        document.getElementById('gen-text').textContent = 'Generer innhald';
+        btn.disabled = false;
+      }
+    }
+
+    async function loadDashboard() {
+      const res = await fetch('/api/campaigns');
+      const campaigns = await res.json();
+
+      if (campaigns.length === 0) {
+        document.getElementById('dashboard-empty').classList.remove('hidden');
+        document.getElementById('dashboard-table').classList.add('hidden');
+        document.getElementById('stats-row').classList.add('hidden');
+        return;
+      }
+
+      const totalClicks = campaigns.reduce((s, c) => s + (c.clicks || 0), 0);
+      const platforms   = new Set(campaigns.map(c => c.platform)).size;
+
+      document.getElementById('stat-campaigns').textContent  = campaigns.length;
+      document.getElementById('stat-clicks').textContent     = totalClicks;
+      document.getElementById('stat-platforms').textContent  = platforms;
+      document.getElementById('stats-row').classList.remove('hidden');
+
+      document.getElementById('dashboard-empty').classList.add('hidden');
+      document.getElementById('dashboard-table').classList.remove('hidden');
+
+      document.getElementById('dashboard-rows').innerHTML = [...campaigns].reverse().map(c => `
+        <tr class="border-b last:border-0 hover:bg-gray-50 transition">
+          <td class="py-3 pr-4 font-medium text-gray-800">${c.name}</td>
+          <td class="py-3 pr-4 text-gray-500">${PLATFORM_EMOJI[c.platform] || ''} ${c.platform}</td>
+          <td class="py-3 pr-4 text-gray-400 text-xs">${new Date(c.created_at).toLocaleDateString('no-NO')}</td>
+          <td class="py-3 text-right font-bold ${c.clicks > 0 ? 'text-green-600' : 'text-gray-300'}">${c.clicks || 0}</td>
+        </tr>
+      `).join('');
+    }
+
+    function copyUTM() {
+      const el = document.getElementById('utm-url');
+      el.select(); document.execCommand('copy');
+      const btn = document.getElementById('copy-utm-btn');
+      btn.textContent = '✓ Kopiert!';
+      setTimeout(() => btn.textContent = 'Kopier', 2000);
+    }
+
+    function copyContent() {
+      const el = document.getElementById('content-text');
+      el.select(); document.execCommand('copy');
+    }
+
+    function showError(msg) {
+      alert(msg);
+    }
+  </script>
+</body>
+</html>
