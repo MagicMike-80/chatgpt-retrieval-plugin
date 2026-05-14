@@ -6,6 +6,7 @@ from models.models import Document, DocumentChunk, DocumentChunkMetadata
 import tiktoken
 
 from services.openai import get_embeddings
+from services.utm import extract_utm_params
 
 # Global variables
 tokenizer = tiktoken.get_encoding(
@@ -126,6 +127,13 @@ def create_document_chunks(
         if doc.metadata is not None
         else DocumentChunkMetadata()
     )
+
+    # Auto-populate UTM fields from the URL when not already provided
+    if metadata.url:
+        utm_params = extract_utm_params(metadata.url)
+        for key, value in utm_params.items():
+            if getattr(metadata, key, None) is None:
+                setattr(metadata, key, value)
 
     metadata.document_id = doc_id
 
