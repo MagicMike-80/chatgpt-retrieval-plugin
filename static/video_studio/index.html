@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>AI Video Studio</title>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --card: #13131a;
+    --border: #2a2a3a;
+    --accent: #7c3aed;
+    --accent2: #06b6d4;
+    --text: #f1f0ff;
+    --muted: #8888aa;
+    --success: #10b981;
+    --error: #ef4444;
+    --warn: #f59e0b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; padding-bottom: 40px; }
+
+  .header { background: linear-gradient(135deg, #1a0533 0%, #0d1b2a 100%); padding: 20px 16px; text-align: center; border-bottom: 1px solid var(--border); }
+  .header h1 { font-size: 1.6rem; font-weight: 800; background: linear-gradient(90deg, #a78bfa, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .header p { color: var(--muted); font-size: 0.85rem; margin-top: 4px; }
+
+  .container { max-width: 680px; margin: 0 auto; padding: 20px 16px; }
+
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 16px; }
+  .card-title { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent2); margin-bottom: 14px; }
+
+  label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 6px; margin-top: 14px; }
+  label:first-of-type { margin-top: 0; }
+
+  input[type="text"], textarea, select {
+    width: 100%; background: #1a1a28; border: 1px solid var(--border); border-radius: 10px;
+    color: var(--text); font-size: 1rem; padding: 12px 14px; outline: none;
+    transition: border-color 0.2s;
+  }
+  input[type="text"]:focus, textarea:focus, select:focus { border-color: var(--accent); }
+  textarea { resize: vertical; min-height: 80px; }
+  select option { background: #1a1a28; }
+
+  .platform-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 4px; }
+  @media (min-width: 480px) { .platform-grid { grid-template-columns: repeat(3, 1fr); } }
+  .platform-btn {
+    background: #1a1a28; border: 2px solid var(--border); border-radius: 12px;
+    padding: 12px 8px; text-align: center; cursor: pointer; transition: all 0.2s;
+  }
+  .platform-btn:hover { border-color: var(--accent); }
+  .platform-btn.active { border-color: var(--accent); background: #2d1b69; }
+  .platform-btn .icon { font-size: 1.4rem; margin-bottom: 4px; }
+  .platform-btn .name { font-size: 0.78rem; font-weight: 600; }
+  .platform-btn .desc { font-size: 0.68rem; color: var(--muted); margin-top: 2px; }
+
+  .upload-area {
+    border: 2px dashed var(--border); border-radius: 12px; padding: 24px 16px;
+    text-align: center; cursor: pointer; transition: all 0.2s; position: relative;
+  }
+  .upload-area:hover, .upload-area.drag { border-color: var(--accent); background: #1a1040; }
+  .upload-area input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .upload-area .upload-icon { font-size: 2rem; margin-bottom: 8px; }
+  .upload-area p { font-size: 0.9rem; color: var(--muted); }
+  .upload-area strong { color: var(--text); }
+
+  .file-list { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .file-chip { background: #1a2a1a; border: 1px solid #2a4a2a; border-radius: 8px; padding: 6px 10px; font-size: 0.78rem; display: flex; align-items: center; gap: 6px; }
+  .file-chip .remove { cursor: pointer; color: var(--error); font-size: 1rem; line-height: 1; }
+
+  .voice-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .voice-btn { background: #1a1a28; border: 2px solid var(--border); border-radius: 10px; padding: 10px 6px; text-align: center; cursor: pointer; transition: all 0.2s; }
+  .voice-btn:hover { border-color: var(--accent2); }
+  .voice-btn.active { border-color: var(--accent2); background: #0d2a30; }
+  .voice-btn .vname { font-size: 0.85rem; font-weight: 600; }
+  .voice-btn .vdesc { font-size: 0.7rem; color: var(--muted); }
+
+  .btn {
+    width: 100%; padding: 16px; border-radius: 14px; border: none; font-size: 1.05rem;
+    font-weight: 700; cursor: pointer; transition: all 0.2s; letter-spacing: 0.02em;
+  }
+  .btn-primary { background: linear-gradient(135deg, var(--accent), #5b21b6); color: white; }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 25px rgba(124,58,237,0.4); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .btn-success { background: linear-gradient(135deg, var(--success), #059669); color: white; }
+  .btn-success:hover { transform: translateY(-1px); box-shadow: 0 8px 25px rgba(16,185,129,0.4); }
+
+  .progress-wrap { display: none; }
+  .progress-wrap.active { display: block; }
+  .progress-bar-bg { background: #1a1a28; border-radius: 999px; height: 10px; overflow: hidden; margin: 10px 0; }
+  .progress-bar { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.4s; width: 0%; }
+  .progress-step { font-size: 0.85rem; color: var(--muted); text-align: center; }
+  .progress-pct { font-size: 1.5rem; font-weight: 800; text-align: center; margin: 6px 0; }
+
+  .result-card { display: none; }
+  .result-card.active { display: block; }
+  .result-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 8px; }
+  .result-meta { font-size: 0.82rem; color: var(--muted); margin-bottom: 16px; }
+  .tag { display: inline-block; background: #1a1040; border: 1px solid var(--accent); border-radius: 6px; padding: 3px 8px; font-size: 0.75rem; color: #c4b5fd; margin: 2px; }
+  .scene-list { margin: 12px 0; }
+  .scene-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .scene-item:last-child { border-bottom: none; }
+  .scene-num { width: 28px; height: 28px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; flex-shrink: 0; }
+  .scene-info .stitle { font-size: 0.88rem; font-weight: 600; }
+  .scene-info .sdur { font-size: 0.75rem; color: var(--muted); }
+
+  .thumbnail-idea { background: #1a1a28; border-radius: 10px; padding: 12px; font-size: 0.85rem; color: var(--muted); margin: 12px 0; border-left: 3px solid var(--warn); }
+
+  .error-msg { background: #2a0a0a; border: 1px solid var(--error); border-radius: 10px; padding: 14px; color: #fca5a5; font-size: 0.88rem; display: none; }
+  .error-msg.active { display: block; }
+
+  .steps { display: flex; justify-content: center; gap: 6px; margin-bottom: 20px; }
+  .step { width: 8px; height: 8px; border-radius: 50%; background: var(--border); transition: background 0.3s; }
+  .step.active { background: var(--accent); }
+  .step.done { background: var(--success); }
+
+  .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 8px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .divider { height: 1px; background: var(--border); margin: 4px 0 14px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🎬 AI Video Studio</h1>
+  <p>Lag profesjonelle videoer med AI — klar for YouTube, TikTok, Instagram og mer</p>
+</div>
+
+<div class="container">
+
+  <!-- Steps indicator -->
+  <div class="steps">
+    <div class="step active" id="s1"></div>
+    <div class="step" id="s2"></div>
+    <div class="step" id="s3"></div>
+    <div class="step" id="s4"></div>
+  </div>
+
+  <!-- STEP 1: Topic -->
+  <div class="card" id="card-topic">
+    <div class="card-title">Steg 1 — Hva handler videoen om?</div>
+    <label>Tema / idé</label>
+    <input type="text" id="topic" placeholder="Eks: 5 tips for bedre søvn, Min reise til Japan, Ny AI-teknologi 2025..." />
+    <label>Stil</label>
+    <select id="style">
+      <option value="engaging and modern">Moderne og engasjerende</option>
+      <option value="educational and informative">Lærerikt og informativt</option>
+      <option value="entertaining and funny">Underholdende og morsomt</option>
+      <option value="inspirational and motivational">Inspirerende og motiverende</option>
+      <option value="professional and corporate">Profesjonell og seriøs</option>
+      <option value="cinematic and dramatic">Kinematografisk og dramatisk</option>
+    </select>
+  </div>
+
+  <!-- STEP 2: Platform -->
+  <div class="card" id="card-platform">
+    <div class="card-title">Steg 2 — Velg plattform</div>
+    <div class="platform-grid" id="platform-grid">
+      <div class="platform-btn active" data-platform="youtube">
+        <div class="icon">▶️</div>
+        <div class="name">YouTube</div>
+        <div class="desc">16:9 · opp til 15 min</div>
+      </div>
+      <div class="platform-btn" data-platform="youtube_shorts">
+        <div class="icon">⚡</div>
+        <div class="name">YT Shorts</div>
+        <div class="desc">9:16 · 60 sek</div>
+      </div>
+      <div class="platform-btn" data-platform="tiktok">
+        <div class="icon">🎵</div>
+        <div class="name">TikTok</div>
+        <div class="desc">9:16 · 3 min</div>
+      </div>
+      <div class="platform-btn" data-platform="instagram">
+        <div class="icon">📸</div>
+        <div class="name">Instagram</div>
+        <div class="desc">9:16 · 90 sek</div>
+      </div>
+      <div class="platform-btn" data-platform="facebook">
+        <div class="icon">👥</div>
+        <div class="name">Facebook</div>
+        <div class="desc">16:9 · 10 min</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 3: Upload files -->
+  <div class="card" id="card-upload">
+    <div class="card-title">Steg 3 — Last opp dine bilder/videoer (valgfritt)</div>
+    <div class="upload-area" id="upload-area">
+      <input type="file" id="file-input" multiple accept="image/*,video/*" />
+      <div class="upload-icon">📁</div>
+      <p><strong>Trykk her eller dra filer inn</strong></p>
+      <p>Bilder og videoklipp brukes i videoen din</p>
+    </div>
+    <div class="file-list" id="file-list"></div>
+  </div>
+
+  <!-- STEP 4: Voice -->
+  <div class="card" id="card-voice">
+    <div class="card-title">Steg 4 — Innlesing / Voice-over</div>
+    <label>Språk</label>
+    <div class="voice-grid" id="lang-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:12px;">
+      <div class="voice-btn active" data-lang="no"><div class="vname">🇳🇴 Norsk</div></div>
+      <div class="voice-btn" data-lang="en"><div class="vname">🇬🇧 English</div></div>
+      <div class="voice-btn" data-lang="sv"><div class="vname">🇸🇪 Svenska</div></div>
+    </div>
+    <label>Stemme <span style="color:var(--muted);font-size:0.75rem;">(krever OpenAI-nøkkel — ellers brukes gratis Google-stemme)</span></label>
+    <div class="voice-grid" id="voice-grid">
+      <div class="voice-btn active" data-voice="nova"><div class="vname">Nova</div><div class="vdesc">Kvinne, vennlig</div></div>
+      <div class="voice-btn" data-voice="shimmer"><div class="vname">Shimmer</div><div class="vdesc">Kvinne, myk</div></div>
+      <div class="voice-btn" data-voice="alloy"><div class="vname">Alloy</div><div class="vdesc">Nøytral</div></div>
+      <div class="voice-btn" data-voice="echo"><div class="vname">Echo</div><div class="vdesc">Mann, varm</div></div>
+      <div class="voice-btn" data-voice="onyx"><div class="vname">Onyx</div><div class="vdesc">Dypt</div></div>
+      <div class="voice-btn" data-voice="fable"><div class="vname">Fable</div><div class="vdesc">Britisk</div></div>
+    </div>
+  </div>
+
+  <!-- Generate button -->
+  <div class="card" id="card-generate">
+    <button class="btn btn-primary" id="generate-btn" onclick="startGeneration()">
+      🎬 Lag video med AI
+    </button>
+  </div>
+
+  <!-- Progress -->
+  <div class="card progress-wrap" id="progress-card">
+    <div class="card-title">Lager videoen din...</div>
+    <div class="progress-pct" id="progress-pct">0%</div>
+    <div class="progress-bar-bg"><div class="progress-bar" id="progress-bar"></div></div>
+    <div class="progress-step" id="progress-step">Starter...</div>
+  </div>
+
+  <!-- Error -->
+  <div class="error-msg" id="error-msg"></div>
+
+  <!-- Result -->
+  <div class="card result-card" id="result-card">
+    <div class="card-title">✅ Video er klar!</div>
+    <div class="result-title" id="result-title"></div>
+    <div class="result-meta" id="result-meta"></div>
+    <div class="divider"></div>
+    <div id="hashtag-list"></div>
+    <div class="thumbnail-idea" id="thumbnail-idea"></div>
+    <div class="card-title" style="margin-top:14px;">Scener i videoen</div>
+    <div class="scene-list" id="scene-list"></div>
+    <div style="margin-top:16px;">
+      <button class="btn btn-success" id="download-btn" onclick="downloadVideo()">
+        ⬇️ Last ned video (MP4)
+      </button>
+    </div>
+    <div style="margin-top:10px;">
+      <button class="btn" style="background:#1a1a28;border:1px solid var(--border);" onclick="resetForm()">
+        🔄 Lag en ny video
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let selectedPlatform = 'youtube';
+let selectedVoice = 'nova';
+let selectedLang = 'no';
+let uploadSession = null;
+let uploadedFiles = [];
+let currentJobId = null;
+
+// Platform selection
+document.querySelectorAll('.platform-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.platform-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedPlatform = btn.dataset.platform;
+  });
+});
+
+// Voice selection
+document.querySelectorAll('#voice-grid .voice-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#voice-grid .voice-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedVoice = btn.dataset.voice;
+  });
+});
+
+// Language selection
+document.querySelectorAll('#lang-grid .voice-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#lang-grid .voice-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedLang = btn.dataset.lang;
+  });
+});
+
+// File upload
+const uploadArea = document.getElementById('upload-area');
+const fileInput = document.getElementById('file-input');
+
+uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('drag'); });
+uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('drag'));
+uploadArea.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadArea.classList.remove('drag');
+  handleFiles(Array.from(e.dataTransfer.files));
+});
+fileInput.addEventListener('change', () => handleFiles(Array.from(fileInput.files)));
+
+async function handleFiles(files) {
+  if (!files.length) return;
+  const formData = new FormData();
+  files.forEach(f => formData.append('files', f));
+  try {
+    const res = await fetch('/api/upload', { method: 'POST', body: formData });
+    const data = await res.json();
+    uploadSession = data.session_id;
+    uploadedFiles = [...uploadedFiles, ...data.files];
+    renderFileList();
+  } catch (e) {
+    console.error('Upload failed', e);
+  }
+}
+
+function renderFileList() {
+  const list = document.getElementById('file-list');
+  list.innerHTML = '';
+  uploadedFiles.forEach((f, i) => {
+    const chip = document.createElement('div');
+    chip.className = 'file-chip';
+    const ext = f.name.split('.').pop().toUpperCase();
+    chip.innerHTML = `<span>${ext}</span><span>${f.name}</span><span class="remove" onclick="removeFile(${i})">×</span>`;
+    list.appendChild(chip);
+  });
+}
+
+function removeFile(idx) {
+  uploadedFiles.splice(idx, 1);
+  renderFileList();
+}
+
+async function startGeneration() {
+  const topic = document.getElementById('topic').value.trim();
+  if (!topic) { document.getElementById('topic').focus(); return; }
+
+  const btn = document.getElementById('generate-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Sender forespørsel...';
+
+  showProgress();
+  hideError();
+  hideResult();
+
+  const formData = new FormData();
+  formData.append('topic', topic);
+  formData.append('platform', selectedPlatform);
+  formData.append('style', document.getElementById('style').value);
+  formData.append('voice', selectedVoice);
+  formData.append('lang', selectedLang);
+  if (uploadSession) formData.append('upload_session', uploadSession);
+
+  try {
+    const res = await fetch('/api/jobs', { method: 'POST', body: formData });
+    const data = await res.json();
+    currentJobId = data.job_id;
+    pollJob(currentJobId);
+  } catch (e) {
+    showError('Klarte ikke starte jobben: ' + e.message);
+    resetBtn();
+  }
+}
+
+function pollJob(jobId) {
+  const source = new EventSource(`/api/jobs/${jobId}/stream`);
+  source.onmessage = (e) => {
+    const job = JSON.parse(e.data);
+    updateProgress(job.progress, job.step);
+
+    if (job.status === 'done') {
+      source.close();
+      showResult(job);
+      resetBtn();
+    } else if (job.status === 'error') {
+      source.close();
+      showError(job.error || 'Ukjent feil');
+      hideProgress();
+      resetBtn();
+    }
+  };
+  source.onerror = () => {
+    source.close();
+    setTimeout(() => fallbackPoll(jobId), 2000);
+  };
+}
+
+async function fallbackPoll(jobId) {
+  try {
+    const res = await fetch(`/api/jobs/${jobId}`);
+    const job = await res.json();
+    updateProgress(job.progress, job.step);
+    if (job.status === 'done') { showResult(job); resetBtn(); }
+    else if (job.status === 'error') { showError(job.error); hideProgress(); resetBtn(); }
+    else setTimeout(() => fallbackPoll(jobId), 3000);
+  } catch (e) { setTimeout(() => fallbackPoll(jobId), 5000); }
+}
+
+function updateProgress(pct, step) {
+  document.getElementById('progress-pct').textContent = pct + '%';
+  document.getElementById('progress-bar').style.width = pct + '%';
+  document.getElementById('progress-step').textContent = step || '';
+  const steps = [5, 30, 55, 100];
+  steps.forEach((threshold, i) => {
+    const el = document.getElementById('s' + (i+1));
+    if (pct >= threshold) el.classList.add('done');
+    else el.classList.remove('done');
+  });
+}
+
+function showResult(job) {
+  hideProgress();
+  const card = document.getElementById('result-card');
+  card.classList.add('active');
+  const s = job.script;
+  if (s) {
+    document.getElementById('result-title').textContent = s.title;
+    document.getElementById('result-meta').textContent =
+      `${s.scenes?.length || 0} scener · ${Math.round(s.total_duration || 0)} sekunder · ${s.music_style}`;
+
+    const hashEl = document.getElementById('hashtag-list');
+    hashEl.innerHTML = (s.hashtags || []).map(h => `<span class="tag">${h}</span>`).join('');
+
+    const thumbEl = document.getElementById('thumbnail-idea');
+    thumbEl.textContent = '💡 Thumbnail: ' + (s.thumbnail_idea || '');
+
+    const sceneEl = document.getElementById('scene-list');
+    sceneEl.innerHTML = (s.scenes || []).map(sc =>
+      `<div class="scene-item">
+        <div class="scene-num">${sc.index + 1}</div>
+        <div class="scene-info">
+          <div class="stitle">${sc.title}</div>
+          <div class="sdur">${sc.duration}s</div>
+        </div>
+      </div>`
+    ).join('');
+  }
+  card.scrollIntoView({ behavior: 'smooth' });
+}
+
+async function downloadVideo() {
+  if (!currentJobId) return;
+  window.location.href = `/api/jobs/${currentJobId}/download`;
+}
+
+function showProgress() { document.getElementById('progress-card').classList.add('active'); }
+function hideProgress() { document.getElementById('progress-card').classList.remove('active'); }
+function showError(msg) { const el = document.getElementById('error-msg'); el.textContent = '⚠️ ' + msg; el.classList.add('active'); }
+function hideError() { document.getElementById('error-msg').classList.remove('active'); }
+function hideResult() { document.getElementById('result-card').classList.remove('active'); }
+function resetBtn() {
+  const btn = document.getElementById('generate-btn');
+  btn.disabled = false;
+  btn.innerHTML = '🎬 Lag video med AI';
+}
+
+function resetForm() {
+  document.getElementById('topic').value = '';
+  uploadedFiles = []; uploadSession = null; currentJobId = null;
+  renderFileList();
+  hideResult(); hideProgress(); hideError();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  updateProgress(0, '');
+  document.querySelectorAll('.step').forEach((s, i) => { s.classList.remove('done'); if (i===0) s.classList.add('active'); else s.classList.remove('active'); });
+  resetBtn();
+}
+</script>
+</body>
+</html>
