@@ -42,6 +42,7 @@ class VideoAgent:
         style: str = "engaging and modern",
         user_assets: list[str] | None = None,
         voice: str = "nova",
+        lang: str = "no",
         music_path: Optional[str] = None,
         progress_cb: Optional[Callable[[int, str], None]] = None,
     ) -> VideoJob:
@@ -73,7 +74,7 @@ class VideoAgent:
 
             _progress(30, "Generating voice-over...")
             voice_path = os.path.join(output_dir, "voice.mp3")
-            self.voice_gen.generate(script.full_narration, voice_path, voice=voice)
+            self.voice_gen.generate(script.full_narration, voice_path, voice=voice, lang=lang)
 
             _progress(55, "Assembling video frames...")
             config = PLATFORM_CONFIGS[platform]

@@ -199,13 +199,20 @@
 
   <!-- STEP 4: Voice -->
   <div class="card" id="card-voice">
-    <div class="card-title">Steg 4 — Velg stemme for innlesing</div>
+    <div class="card-title">Steg 4 — Innlesing / Voice-over</div>
+    <label>Språk</label>
+    <div class="voice-grid" id="lang-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:12px;">
+      <div class="voice-btn active" data-lang="no"><div class="vname">🇳🇴 Norsk</div></div>
+      <div class="voice-btn" data-lang="en"><div class="vname">🇬🇧 English</div></div>
+      <div class="voice-btn" data-lang="sv"><div class="vname">🇸🇪 Svenska</div></div>
+    </div>
+    <label>Stemme <span style="color:var(--muted);font-size:0.75rem;">(krever OpenAI-nøkkel — ellers brukes gratis Google-stemme)</span></label>
     <div class="voice-grid" id="voice-grid">
       <div class="voice-btn active" data-voice="nova"><div class="vname">Nova</div><div class="vdesc">Kvinne, vennlig</div></div>
       <div class="voice-btn" data-voice="shimmer"><div class="vname">Shimmer</div><div class="vdesc">Kvinne, myk</div></div>
       <div class="voice-btn" data-voice="alloy"><div class="vname">Alloy</div><div class="vdesc">Nøytral</div></div>
       <div class="voice-btn" data-voice="echo"><div class="vname">Echo</div><div class="vdesc">Mann, varm</div></div>
-      <div class="voice-btn" data-voice="onyx"><div class="vname">Onyx</div><div class="vdesc">Dypt, autoritativt</div></div>
+      <div class="voice-btn" data-voice="onyx"><div class="vname">Onyx</div><div class="vdesc">Dypt</div></div>
       <div class="voice-btn" data-voice="fable"><div class="vname">Fable</div><div class="vdesc">Britisk</div></div>
     </div>
   </div>
@@ -255,6 +262,7 @@
 <script>
 let selectedPlatform = 'youtube';
 let selectedVoice = 'nova';
+let selectedLang = 'no';
 let uploadSession = null;
 let uploadedFiles = [];
 let currentJobId = null;
@@ -269,11 +277,20 @@ document.querySelectorAll('.platform-btn').forEach(btn => {
 });
 
 // Voice selection
-document.querySelectorAll('.voice-btn').forEach(btn => {
+document.querySelectorAll('#voice-grid .voice-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.voice-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('#voice-grid .voice-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     selectedVoice = btn.dataset.voice;
+  });
+});
+
+// Language selection
+document.querySelectorAll('#lang-grid .voice-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#lang-grid .voice-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedLang = btn.dataset.lang;
   });
 });
 
@@ -339,6 +356,7 @@ async function startGeneration() {
   formData.append('platform', selectedPlatform);
   formData.append('style', document.getElementById('style').value);
   formData.append('voice', selectedVoice);
+  formData.append('lang', selectedLang);
   if (uploadSession) formData.append('upload_session', uploadSession);
 
   try {

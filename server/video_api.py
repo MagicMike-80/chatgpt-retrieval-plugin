@@ -71,6 +71,7 @@ async def create_job(
     platform: str = Form("youtube"),
     style: str = Form("engaging and modern"),
     voice: str = Form("nova"),
+    lang: str = Form("no"),
     upload_session: Optional[str] = Form(None),
 ):
     try:
@@ -100,7 +101,7 @@ async def create_job(
                 if p.is_file()
             ]
 
-    asyncio.create_task(_run_job(job_id, topic, plat, style, voice, user_assets))
+    asyncio.create_task(_run_job(job_id, topic, plat, style, voice, lang, user_assets))
     return {"job_id": job_id, "status": "pending"}
 
 
@@ -110,6 +111,7 @@ async def _run_job(
     platform: Platform,
     style: str,
     voice: str,
+    lang: str,
     user_assets: list[str],
 ):
     def update(pct: int, msg: str):
@@ -127,6 +129,7 @@ async def _run_job(
             style=style,
             user_assets=user_assets or None,
             voice=voice,
+            lang=lang,
             progress_cb=update,
         )
 
